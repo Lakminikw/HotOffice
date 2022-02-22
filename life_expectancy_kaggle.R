@@ -7,6 +7,7 @@ life_expectancy_15 = life_expectancy %>%
         select(-year)
 
 library(naniar)
+library(ggplot2)
 
 vis_miss(life_expectancy_15)
 
@@ -25,6 +26,9 @@ vis_miss(life_expectancy_14)
 # considering 2014 and removing missing values
 # total obs. estimate = 143
 
+life_expectancy_14 %>%
+        ggplot() +
+        geom_histogram()      
 
 life_expectancy_05 = life_expectancy %>%
         filter(year == "2005") %>%
