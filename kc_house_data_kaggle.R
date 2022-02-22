@@ -39,4 +39,5 @@ housedata$grade_cat = as.factor(housedata$grade_cat)
 
 contrasts(housedata$grade_cat)
 
-########### 
+########### cool 
+
