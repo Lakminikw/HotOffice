@@ -1,4 +1,5 @@
 life_expectancy <- read.csv("life_expectancy_kaggle.csv")
+print("hello")
 
 # filtering only 2015 values
 
