@@ -1,0 +1,296 @@
+---
+title: "Introduction to Regression - Life Expectancy Data"
+
+output: 
+  html_document:
+  toc: true
+  toc_float: true
+  toc_collapsed: true
+toc_depth: 3
+number_sections: true
+theme: lumen
+---
+``
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(naniar)
+library(GGally)
+```
+
+# Data Description
+
+The Global Health Observatory (GHO) data repository under World Health Organization (WHO) keeps track of the health status as well as many other related factors for all countries The datasets are made available to public for the purpose of health data analysis. The dataset related to life expectancy, health factors for 193 countries has been collected from the same WHO data repository website and its corresponding economic data was collected from United Nation website. Among all categories of health-related factors only those critical factors were chosen which are more representative. It has been observed that in the past 15 years , there has been a huge development in health sector resulting in improvement of human mortality rates especially in the developing nations in comparison to the past 30 years. Therefore, in this project we have considered data from year 2000-2015 for 193 countries for further analysis. The individual data files have been merged together into a single dataset. On initial visual inspection of the data showed some missing values. As the datasets were from WHO, we found no evident errors. Missing data was handled in R software by using Missmap command. The result indicated that most of the missing data was for population, Hepatitis B and GDP. The missing data were from less known countries like Vanuatu, Tonga, Togo,Cabo Verde etc. Finding all data for these countries was difficult and hence, it was decided that we exclude these countries from the final model dataset. The final merged file(final dataset) consists of 22 Columns and 2938 rows which meant 20 predicting variables. All predicting variables was then divided into several broad categories:Immunization related factors, Mortality factors, Economical factors and Social factors. 
+
+## Variables
+
+Life expectancy: Life Expectancy in age
+
+Adult Mortality: Adult Mortality Rates of both sexes (probability of dying between 15 and 60 years per 1000 population) 
+
+Infant deaths: Number of Infant Deaths per 1000 population
+
+Alcohol: Alcohol, recorded per capita (15+) consumption (in litres of pure alcohol) 
+
+Percentage expenditure: Expenditure on health as a percentage of Gross Domestic Product per capita(%)
+
+Hepatitis B: Hepatitis B (HepB) immunization coverage among 1-year-olds (%)
+
+Measles: Measles - number of reported cases per 1000 population 
+
+BMI: Average Body Mass Index of entire population 
+
+under-five deaths: Number of under-five deaths per 1000 population 
+
+Polio: Polio (Pol3) immunization coverage among 1-year-olds (%) 
+
+Total expenditure: General government expenditure on health as a percentage of total government expenditure (%)
+
+Diphtheria: Diphtheria tetanus toxoid and pertussis (DTP3) immunization coverage among 1-year-olds (%) 
+
+HIV/AIDS: Deaths per 1 000 live births HIV/AIDS (0-4 years) 
+
+GDP: Gross Domestic Product per capita (in USD) 
+
+Population: Population of the country 
+
+thinness 1-19 years: Prevalence of thinness among children and adolescents for Age 10 to 19 (%) 
+
+
+thinness 5-9 years: Prevalence of thinness among children for Age 5 to 9(%) 
+
+Income composition of resources: Human Development Index in terms of income composition of resources (index ranging from 0 to 1) 
+
+
+Schooling: Number of years of Schooling(years) 
+
+
+
+## Data Preprocessing
+
+To maintain the dependency of observations, one-year (2014) dataset was selected. Rows with missing observations were removed.
+
+```{r}
+life_expectancy <- read.csv("life_expectancy_kaggle.csv")
+life_expectancy_14 = life_expectancy %>%
+        filter(year == "2014") %>%
+        select(-year)
+LE=na.omit(life_expectancy_14)
+```
+
+# Data Understanding
+
+Let's see the first few observations in the dataset and the structure of the variables.
+```{r}
+head(LE)
+str(LE)
+```
+
+Let's plot scatter matrix plot to see the relationship among variables.
+
+```{r}
+ggcorr(LE[,-c(1,2)], label = TRUE)
+```
+
+Let's have a closer look at the variables which shows relatively high correlation with life expectancy.
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+ggpairs(data = LE[,c("life_exp","status", "adult_mort", "alcohol","BMI","HIV", "Income", "school")])
+
+```
+
+
+```{r}
+summary(LE)
+```
+```{r}
+attach(LE)
+boxplot(life_exp~status)
+
+ggplot(data = LE,
+       aes(x=status, y=life_exp, fill=status))+
+        geom_boxplot()
+```
+
+
+
+# Simple linear Regression
+
+### Life expectancy and School
+
+```{r message=FALSE, warning=FALSE}
+attach(LE)
+s_model_1 <- lm(formula = life_exp~school, data = LE)
+summary(s_model_1)
+```
+#### Model equation
+$$E[Life.exp]=`r s_model_1$coefficients[1]`+ `r s_model_1$coefficients[2]`School$$
+
+
+#### Anova
+```{r}
+anova(s_model_1)
+```
+
+#### Visualization
+```{r}
+plot(life_exp~school)
+abline(s_model_1)
+```
+
+```{r}
+library(visreg)
+visreg(s_model_1)
+```
+
+#### Diagnoistic plots
+
+```{r}
+par(mfrow=c(2,2))
+plot(s_model_1)
+hist(s_model_1$residuals)
+```
+
+
+```{r}
+library(performance)
+library(see)
+check_model(s_model_1)
+```
+
+### Life expectancy and Adult Mortality Rate
+```{r}
+s_model_2=lm(life_exp~adult_mort, data = LE)
+summary(s_model_2)
+```
+
+#### Model equation
+$$E[Life.exp]=`r s_model_2$coefficients[1]`+ `r s_model_2$coefficients[2]`Adult.mort$$
+
+#### Anova
+```{r}
+anova(s_model_2)
+```
+
+#### Visualization
+```{r}
+plot(life_exp~adult_mort)
+abline(s_model_2)
+```
+
+```{r}
+visreg(s_model_2)
+```
+
+#### Diagnoistic plots
+
+```{r}
+par(mfrow=c(2,2))
+plot(s_model_2)
+```
+
+
+```{r}
+check_model(s_model_2)
+```
+
+# Multipple Linear Regression
+
+Let's remove the country as the spatial analysis is not the scope. Also let's convert status variable  as a factor/categorical variable.
+```{r}
+LE_new=LE[,-1]
+```
+
+Let's fit a multiple linear regression with all the other variables.
+
+```{r}
+m_model_1=lm(life_exp~., data = LE_new)
+summary(m_model_1)
+```
+
+## Variable Selection
+
+### Forward Selection
+```{r}
+m_model_f=step(lm(life_exp~1, data = LE_new), direction = "forward", scope = life_exp~status + adult_mort + inf_death + alcohol + perc_exp +     hep_B + measles + BMI + under_5_d + polio + tot_exp + diphtheria +     HIV + GDP + pop + thin10_19 + thin5_9 + Income + school, trace = 0)
+#trace=0 is just to prevent printing the output 
+```
+
+```{r}
+summary(m_model_f)
+```
+### Backward Selection
+```{r}
+m_model_b=step(lm(life_exp~., data = LE_new), direction = "backward", trace = 0)
+```
+
+```{r}
+summary(m_model_b)
+```
+
+
+### Stepwise Selection
+```{r}
+m_model_s=step(lm(life_exp~status + adult_mort + inf_death + alcohol + perc_exp +     hep_B + measles + BMI + under_5_d + polio + tot_exp + diphtheria +     HIV + GDP + pop + thin10_19 + thin5_9 + Income + school), direction = "both", trace = 0)
+```
+
+```{r}
+summary(m_model_s)
+```
+
+### Another models
+```{r}
+model_1=lm(life_exp ~ adult_mort + tot_exp + HIV + GDP , data = LE_new)
+summary(model_1)
+```
+```{r}
+AIC(model_1)
+AIC(m_model_f)
+
+```
+
+Relationship between GDP and Income
+```{r}
+plot(GDP~Income)
+```
+
+```{r}
+anova(m_model_f, model_1)
+```
+
+
+```{r}
+s_model_3=lm(life_exp~GDP)
+summary(s_model_3)
+```
+
+Best model sofar
+```{r}
+best_model=m_model_f
+summary(best_model)
+```
+
+#### Model equation
+
+$$E[Life.exp]=`r best_model$coefficients[1]`+ `r best_model$coefficients[2]`Income + `r best_model$coefficients[3]`adult.mort  + `r best_model$coefficients[4]`HIV + `r best_model$coefficients[5]`tot.exp$$
+
+#### Model Diagnostics
+
+```{r}
+par(mfrow=c(2,2))
+plot(best_model)
+check_model(best_model)
+```
+
+### Model with Interaction
+
+```{r}
+m2=lm(life_exp~adult_mort+HIV+tot_exp+I(tot_exp*adult_mort))
+summary(m2)
+AIC(m2)
+AIC(m_model_f)
+```
+

@@ -1,40 +1,33 @@
-life_expectancy <- read.csv("life_expectancy_kaggle.csv")
-print("hello")
-
-# filtering only 2015 values
-
-life_expectancy_15 = life_expectancy %>%
-        filter(year == "2015") %>%
-        select(-year)
-
+library(tidyverse)
 library(naniar)
-library(ggplot2)
+library(GGally)
 
-vis_miss(life_expectancy_15)
+#### Data Preprocessing
+life_expectancy <- read.csv("life_expectancy_kaggle.csv")
 
-life_expectancy_10 = life_expectancy %>%
-        filter(year == "2010") %>%
-        select(-year)
 
-vis_miss(life_expectancy_10)
+# filtering only 2014 values and removing missing values
+
+# 
+# life_expectancy_10 = life_expectancy %>%
+#         filter(year == "2010") %>%
+#         select(-year)
+# vis_miss(life_expectancy_10)
+# life_complete_10=na.omit(life_expectancy_10)
 
 life_expectancy_14 = life_expectancy %>%
         filter(year == "2014") %>%
         select(-year)
 
 vis_miss(life_expectancy_14)
+LE=na.omit(life_expectancy_14)
 
-# considering 2014 and removing missing values
-# total obs. estimate = 143
+#### Data Understanding
+str(LE)
 
-life_expectancy_14 %>%
-        ggplot() +
-        geom_histogram()      
+ggpairs(data = LE[,-1])
+ggpairs(data = LE[,c("life_exp","status", "adult_mort", "alcohol","BMI","HIV", "Income", "school")])
 
-life_expectancy_05 = life_expectancy %>%
-        filter(year == "2005") %>%
-        select(-year)
 
-vis_miss(life_expectancy_05)
- 
-# hello
+
+
