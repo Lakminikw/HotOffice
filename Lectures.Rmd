@@ -1,0 +1,268 @@
+---
+title: "Introductory Course in Supervised Machine Learning"
+subtitle: "Fundamentals of Regression Analysis"
+author: " "
+date: ' '
+output: 
+    html_document:
+       toc: true
+       toc_float: true
+       toc_collapsed: true
+       toc_depth: 3
+       number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning Outcomes
+
+At the end of this course, you will be able to, 
+
+1. Design a research question and project starting from a real structured data set that adapts knowledge from diverse sources and articulate research questions that can be feasibly interrogated through regression models. 
+
+2. Demonstrate knowledge of performing simple and multiple linear regression models in R.
+
+3. Demonstrate ability to choose a good liner model by model comparison.
+
+4. Defend the model significance and interpret the models, impact, and its limitations.
+
+# Why Regression?
+
+Explain why we need regression analysis using life expectancy dataset.
+
+Some more examples...
+
+![](Images/reg.drawio.png){height=300px}
+
+# Formulate Research Questions
+
+Give as an activity.....
+
+## Variable types 
+
+cheat sheet for variable types
+
+![](Images/variabletypes_cheatsheet.pdf){width=500px}
+
+Activity: Drag and drop activity to differentiate among variable types. 
+
+## Data Visualization
+
+![](Images/visualization_cheatsheet.pdf){width=500px}
+
+# Data Understanding and Visualization
+
+Here, you will learn about:
+
+1. What are Qualitative and Quantitative variable?
+2. How to handle different variable types in R?
+3. How to perform data visualization in terms of regression?
+
+### Data Description
+
+The World Health Organization (WHO) keeps track of the health status as well as Immunization related factors, Mortality factors for all countries. Its corresponding economic and social data were collected from United Nation website. This data is taken for the year 2014. Full dataset can be accessed via https://www.kaggle.com/augustus0498/life-expectancy-who.    
+
+The variables are:
+
+Life expectancy: Life Expectancy in age
+
+Adult Mortality: Adult Mortality Rates of both sexes (probability of dying between 15 and 60 years per 1000 population) 
+
+Infant deaths: Number of Infant Deaths per 1000 population
+
+Alcohol: Alcohol, recorded per capita (15+) consumption (in litres of pure alcohol) 
+
+Percentage expenditure: Expenditure on health as a percentage of Gross Domestic Product per capita(%)
+
+Hepatitis B: Hepatitis B (HepB) immunization coverage among 1-year-olds (%)
+
+Measles: Measles - number of reported cases per 1000 population 
+
+BMI: Average Body Mass Index of entire population 
+
+under-five deaths: Number of under-five deaths per 1000 population 
+
+Polio: Polio (Pol3) immunization coverage among 1-year-olds (%) 
+
+Total expenditure: General government expenditure on health as a percentage of total government expenditure (%)
+
+Diphtheria: Diphtheria tetanus toxoid and pertussis (DTP3) immunization coverage among 1-year-olds (%) 
+
+HIV/AIDS: Deaths per 1 000 live births HIV/AIDS (0-4 years) 
+
+GDP: Gross Domestic Product per capita (in USD) 
+
+Population: Population of the country 
+
+thinness 1-19 years: Prevalence of thinness among children and adolescents for Age 10 to 19 (%) 
+
+thinness 5-9 years: Prevalence of thinness among children for Age 5 to 9(%) 
+
+Income composition of resources: Human Development Index in terms of income composition of resources (index ranging from 0 to 1) 
+
+Schooling: Number of years of Schooling(years) 
+
+```{r}
+#load the data
+LE = read.csv("Datasets/LifeExpectancy.csv")
+attach(LE)
+```
+
+```{r}
+head(LE)
+str(LE)
+```
+
+converting as.factor()
+
+```{r}
+LE$country = as.factor(LE$country)
+LE$status = as.factor(LE$status)
+```
+
+```{r}
+summary(LE)
+```
+
+Let's plot scatter matrix plot to see the relationship among continuous variables. Don't forget to remove categorical variables.
+
+```{r}
+library(GGally)
+ggcorr(LE[,-c(1,2)], label = TRUE)
+```
+
+Let's have a closer look at the variables which shows relatively high correlation with life expectancy.
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+ggpairs(data = LE[,c("life_exp","status", "adult_mort", "alcohol","BMI","HIV", "Income", "school")])
+```
+
+Think about what you observe?
+
+Let's explore the association of development status (factor variable) with life expectancy (response variable). 
+
+```{r}
+boxplot(life_exp~status)
+
+# Alternatively,
+library(ggplot2)
+ggplot(data = LE,
+       aes(x=status, y=life_exp, fill=status))+
+        geom_boxplot()
+```
+
+
+# Simple Linear Regression
+
+Here, you will learn about:
+
+1. How to build a simple linear regression model
+2. How to assess the significance of linear association
+3. What are the model assumptions and how to check whether the model satisfies the assumptions?
+4. How to interpret the model?
+
+## Building a Simple Linear Regression
+
+Out of all the quantitative predictors, school has a highest linear relationship (highest pearson correlation coefficient & matrix plot) with life expectancy. Thus, we fit a Simple Linear Regression with school as the predictor.
+
+```{r}
+model1 <- lm(formula = life_exp~school, data = LE)
+summary(model1)
+```
+
+## Assessing the significance of linear association (beta values)
+
+First we are interesting in checking whether the linear relationship between life expectancy and school significantly differ from "0". This can be done by using hypothesis testing with null and alternative hypothesis as follows:
+
+$H_0 : \beta_1 = 0$ suggesting no significant linear relationship between life expectancy (*response variable*) and school (*predictor variable of interest*).
+
+$H_1 : \beta_1 \neq 0$ suggesting significant linear relationship between life expectancy (*response variable*) and school (*predictor variable of interest*).
+
+We can see from the above output that the p-value corresponding to school in the coefficients table is less than 0.05. Thus, we can reject the null hypothesis at 5% level of significance. This suggests the presence of a significant linear relationship between life expectancy (*response variable*) and school (*predictor variable of interest*).    
+
+Note that the above model has $R^2 =$ `r round(summary(model1)$r.squared, 2)`. That is, about `r round(summary(model1)$r.squared*100, 2)`% of the variation in the data is explained by the model. 
+
+## Checking for model assumptions
+
+Next, lets check 
+
+1. whether model assumptions (linearity, normality of residuals, homoscedasticity of the residuals) are satisfied.
+
+2.presence of any influential points.
+
+```{r}
+par(mfrow=c(2,3))
+plot(model1)
+hist(model1$residuals)
+```
+
+```{r}
+library(performance)
+library(see)
+check_model(model1)
+```
+
+Note that, 
+
+- If the model is linear plot 1 should look like the sky at night, with no pattern of any sort. 
+
+- In plot 2 line should be straight if the normality assumption of the residuals is valid. 
+
+- The third graph is good for detecting non-constancy of variance (heteroscedasticity).
+
+- The fourth graph shows any possible patterns in the standardized residuals as a function of the leverage. The graph also shows Cook’s distance ( a statistic that measures the relative influence of each observation when performing regression analysis), highlighting the identity of particularly influential data points. 
+
+NOTE: When data points are singled out as being influential, and When we were happier with other aspects of the model, we would repeat the modelling,leaving out each of these points in turn.
+
+From the above plots, we can clearly see that the linearity assumption and homoscadasticity of residuals assumptions are violated. 
+
+What can we do to address this? (...)
+
+## Interpreting the model
+
+The model equation can be written as:
+
+$\hat Life.exp =$ `r model1$coefficients[1]` + `r model1$coefficients[2]` $School$
+  
+(OR)  
+  
+$E[ \hat Life.exp] =$ `r model1$coefficients[1]` + `r model1$coefficients[2]` $School$
+
+Here, 
+
+- the intercept = `r model1$coefficients[1]` meaning that on average the life expectancy is `r model1$coefficients[1]` when the number of years of schooling is 0. 
+
+- the slope = `r model1$coefficients[2]` meaning that on average the life expectancy increases by `r model1$coefficients[2]` for every unit increase in school.
+
+Let's visualize the regression line...
+
+```{r}
+plot(life_exp~school)
+abline(model1)
+```
+
+```{r}
+library(visreg)
+visreg(model1)
+```
+
+
+
+# Multiple Linear Regression
+
+Here, you will learn about:
+
+1. How to build a multiple linear regression model
+2. How to assess the significance of linear association
+3. How to perform ANOVA on a regression output
+4. What are the model assumptions and how to check whether the model satisfies the assumptions?
+5. How to interpret the model?
+6. How to improve the model? (Variable selection, Interaction effects and variable transformations)
+7. Pitfalls
+
+# What Next?
+
+
+
